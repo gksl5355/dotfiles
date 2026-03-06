@@ -1,50 +1,100 @@
 # dotfiles
 
-gksl5355의 개발환경 설정 모음.
+gksl5355의 WSL2 개발환경 설정.
 
-## 구성
+---
+
+## 구성 파일
 
 ```
-dotfiles/
-├── tmux/
-│   ├── tmux.conf          # oh-my-tmux base symlink용
-│   └── tmux.conf.local    # Tokyo Night 테마 + HUD 설정
-├── claude/
-│   └── hud/
-│       ├── team-hud.mjs   # Claude Code 팀 에이전트 상태 (status bar)
-│       ├── pane-hud.sh    # tmux pane 프로세스 + listening 포트 (status bar)
-│       └── hud-detail.sh  # 인터랙티브 팝업 HUD (fzf)
-├── install.sh             # 자동 설치 스크립트
-└── README.md
+tmux/
+  tmux.conf.local       # 핵심 — oh-my-tmux 커스텀 설정 (Tokyo Night 테마 + HUD)
+  tmux.conf.extra       # 부가 — clipboard/terminal 설정 (~/.tmux.conf 용)
+
+claude/
+  settings.json         # Claude Code 설정 (모델, 권한, 팀 에이전트)
+  teammate-sonnet.sh    # 팀 에이전트 모델 강제 래퍼
+  bash_aliases.sh       # cc / ccn / cca / ccs 단축 명령
+  hud/
+    team-hud.mjs        # status bar — 팀 에이전트 상태
+    pane-hud.sh         # status bar — pane 프로세스 + listening 포트
+    hud-detail.sh       # prefix+h 팝업 — fzf 인터랙티브 HUD
+  skills/
+    spawn-team/         # 팀 병렬 개발 스킬
+    ralph/              # PRD 루프 스킬
+    debate/             # 아키텍처 리뷰 스킬
 ```
 
-## 빠른 설치
+---
+
+## 새 PC 세팅 순서
+
+### 1. oh-my-tmux 설치 (필수 전제조건)
+
+```bash
+git clone https://github.com/gpakosz/.tmux.git ~/.local/share/tmux/oh-my-tmux
+mkdir -p ~/.config/tmux
+ln -sf ~/.local/share/tmux/oh-my-tmux/.tmux.conf ~/.config/tmux/tmux.conf
+```
+
+### 2. dotfiles clone
 
 ```bash
 git clone https://github.com/gksl5355/dotfiles.git ~/dotfiles
-cd ~/dotfiles && bash install.sh
 ```
 
-## tmux 테마
+### 3. tmux 설정
 
-Tokyo Night 기반 커스텀 테마.
+```bash
+# 핵심 파일 — oh-my-tmux 커스텀 (테마/HUD/단축키)
+ln -sf ~/dotfiles/tmux/tmux.conf.local ~/.config/tmux/tmux.conf.local
 
-- status bar 상단 고정
-- 좌측: `session | uptime | loadavg + pane 프로세스 현황`
-- 우측: `팀 에이전트 HUD (활성시) | 시간/날짜 | user@host`
-- status bar 클릭 or `prefix + h` → 인터랙티브 팝업
+# clipboard/terminal 부가 설정
+cp ~/dotfiles/tmux/tmux.conf.extra ~/.tmux.conf
+```
 
-## HUD 팝업 기능
+### 4. Claude Code HUD
 
-status bar 클릭하면 fzf 기반 팝업 오픈:
+```bash
+mkdir -p ~/.claude/hud
+ln -sf ~/dotfiles/claude/hud/team-hud.mjs  ~/.claude/hud/team-hud.mjs
+ln -sf ~/dotfiles/claude/hud/pane-hud.sh   ~/.claude/hud/pane-hud.sh
+ln -sf ~/dotfiles/claude/hud/hud-detail.sh ~/.claude/hud/hud-detail.sh
+chmod +x ~/dotfiles/claude/hud/*.sh
+```
 
-- **서버 선택** → curl 헬스체크 / 브라우저 오픈
-- **pane 선택** → 해당 pane으로 이동
-- **Esc** → 닫기
+fzf 없으면 설치:
+```bash
+git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+~/.fzf/install --all --no-bash --no-zsh --no-fish
+```
 
-## 의존성
+### 5. Claude Code 설정
 
-- [oh-my-tmux](https://github.com/gpakosz/.tmux)
-- fzf (install.sh가 자동 설치)
-- node.js (team-hud.mjs용)
-- python3 (pane-hud 포트 스캔용)
+```bash
+cp ~/dotfiles/claude/settings.json ~/.claude/settings.json
+cp ~/dotfiles/claude/teammate-sonnet.sh ~/.claude/teammate-sonnet.sh
+chmod +x ~/.claude/teammate-sonnet.sh
+
+mkdir -p ~/.claude/skills
+cp -r ~/dotfiles/claude/skills/* ~/.claude/skills/
+```
+
+### 6. bash aliases
+
+```bash
+cat ~/dotfiles/claude/bash_aliases.sh >> ~/.bashrc
+source ~/.bashrc
+```
+
+### 7. tmux 리로드
+
+```bash
+tmux source ~/.config/tmux/tmux.conf
+```
+
+---
+
+## 세팅 상세
+
+→ [SETUP.md](./SETUP.md) 참고
